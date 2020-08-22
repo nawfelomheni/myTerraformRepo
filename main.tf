@@ -1,38 +1,29 @@
 provider "aws" {
-  region = "eu-west-3"
   version = "~> 3.2.0"
+  region  = "eu-west-3"
 }
 
-resource "aws_instance" "myStandardInstance" {
-  count =var.numberOfInstances
+
+resource "aws_instance" "myModuleInstance" {
+  count = var.numberOfInstances
   ami = var.myInstanceAmi
   instance_type = var.myInstanceType
-  availability_zone = var.myPrincipaleAwsAZ
-  subnet_id = var.mySubnetId
-  key_name = var.myInstanceKeyName
-  security_groups = [aws_security_group.myInstanceSecGroup.name]
-
+  security_groups = [aws_security_group.myModuleSecGroup.name]
   tags = {
-    name = "myTerraformInstance-${count.index}"
-    owner = "lilouch"
+    Name = "myModuleInstance-${count.index}"
   }
 }
-resource "aws_security_group" "myInstanceSecGroup" {
-  name = "myTerraformInstanceSecGroup"
-  vpc_id = var.myVPCId
-  ingress {
-    from_port = 22
-    protocol = "TCP"
-    to_port = 22
-    cidr_blocks = ["37.171.46.216/32"]
-  }
-  egress {
-    from_port = 0
-    protocol = "TCP"
-    to_port = 0
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+
+resource "aws_default_vpc" "myDefaultVpc" {}
+resource "aws_security_group" "myModuleSecGroup" {
+  name = "myModuleSecGroup"
+  vpc_id = aws_default_vpc.myDefaultVpc.id
 }
-output "myInstancceId" {
-  value = aws_instance.myStandardInstance
+resource "aws_security_group_rule" "myModuleRule" {
+  from_port = 80
+  protocol = "TCP"
+  security_group_id = aws_security_group.myModuleSecGroup.id
+  to_port = 80
+  type = "ingress"
 }
+
